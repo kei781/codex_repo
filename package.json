@@ -1,0 +1,20 @@
+{
+  "name": "codex_repo",
+  "version": "1.0.0",
+  "description": "CV3 올인원 업무 자동화 API 스위트",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --check src/server.js && node --check src/services/marketingService.js && node --check src/services/productivityService.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "dotenv": "^16.4.5",
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}

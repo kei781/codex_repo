@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV3 올인원 API 스위트 대시보드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div class="min-h-screen flex flex-col md:flex-row">
+    <aside class="md:w-80 bg-slate-900/95 border-b md:border-b-0 md:border-r border-slate-800 p-5">
+      <div class="mb-6">
+        <h1 class="text-xl font-bold tracking-tight">CV3 올인원 API 스위트</h1>
+        <p class="text-sm text-slate-400 mt-1">6개 AI 기능을 한 화면에서 테스트</p>
+      </div>
+      <nav id="featureTabs" class="space-y-2"></nav>
+    </aside>
+
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+      <section class="max-w-5xl mx-auto">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl shadow-slate-950/60">
+          <header class="px-6 py-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 id="featureTitle" class="text-lg font-semibold"></h2>
+              <p id="featureDescription" class="text-sm text-slate-400 mt-1"></p>
+            </div>
+            <button id="fillDummyBtn" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-medium transition">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              테스트 데이터 채우기
+            </button>
+          </header>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-6">
+            <div class="p-6 border-b lg:border-b-0 lg:border-r border-slate-800">
+              <h3 class="text-sm font-semibold text-slate-300 mb-4">입력</h3>
+              <form id="inputForm" class="space-y-4"></form>
+              <button id="submitBtn" class="mt-6 w-full inline-flex justify-center items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-4 py-3 text-sm font-semibold transition">
+                <i class="fa-solid fa-paper-plane"></i>
+                API 요청 보내기
+              </button>
+            </div>
+
+            <div class="p-6">
+              <h3 class="text-sm font-semibold text-slate-300 mb-4">출력</h3>
+              <div id="output" class="prose prose-invert prose-sm max-w-none rounded-xl border border-slate-800 bg-slate-950/70 p-4 min-h-[420px] whitespace-pre-wrap"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const features = [
+      {
+        id: 'ad-copy',
+        menu: '[마케팅] 광고 카피 생성기',
+        description: '제품 정보와 타깃 고객을 기반으로 광고 문구를 생성합니다.',
+        endpoint: '/api/marketing/ad-copy',
+        fields: [
+          { name: 'productInfo', label: '제품 정보', type: 'textarea', rows: 4, placeholder: '예: AI 기반 세일즈 자동화 SaaS' },
+          { name: 'targetCustomer', label: '타깃 고객', type: 'input', placeholder: '예: B2B 마케팅 매니저' },
+          { name: 'previousPerformanceData', label: '기존 성과 데이터', type: 'textarea', rows: 3, placeholder: '예: 지난 CTR 2.4%' }
+        ],
+        dummy: {
+          productInfo: 'AI 기반 세일즈 자동화 SaaS\n- 자동 리드 스코어링\n- 이메일 시퀀스 자동 발송\n- 주간 리포트 제공',
+          targetCustomer: 'B2B 마케팅 팀장 / CRM 운영 매니저',
+          previousPerformanceData: '지난 캠페인 CTR 2.4%, 전환율 1.1%, CAC 120,000원'
+        }
+      },
+      {
+        id: 'sentiment',
+        menu: '[마케팅] 라방 채팅 분석',
+        description: '라이브 방송 채팅 로그를 감정/니즈 관점으로 분석합니다.',
+        endpoint: '/api/marketing/sentiment',
+        fields: [
+          { name: 'chatLogsRaw', label: '채팅 로그 (줄바꿈으로 구분)', type: 'textarea', rows: 10, placeholder: '한 줄에 채팅 하나씩 입력' }
+        ],
+        mapPayload: (values) => ({
+          chatLogs: values.chatLogsRaw.split('\n').map((line) => line.trim()).filter(Boolean)
+        }),
+        dummy: {
+          chatLogsRaw: `색감 너무 예뻐요\n배송 얼마나 걸리나요?\n가격이 조금 부담되네요\n지난번보다 품질이 좋아진 것 같아요\n오늘만 할인 맞나요?\n재고 없을까봐 걱정돼요`
+        }
+      },
+      {
+        id: 'competitor',
+        menu: '[마케팅] 경쟁사 비교 분석',
+        description: '자사와 경쟁사의 스펙을 비교하여 차별화 포인트를 도출합니다.',
+        endpoint: '/api/marketing/competitor',
+        fields: [
+          { name: 'myProductSpec', label: '우리 제품 스펙', type: 'textarea', rows: 6 },
+          { name: 'competitorSpec', label: '경쟁사 제품 스펙', type: 'textarea', rows: 6 }
+        ],
+        dummy: {
+          myProductSpec: '월 9만원\nAI 추천 정확도 91%\nCRM 연동 지원\n온보딩 1일',
+          competitorSpec: '월 12만원\nAI 추천 정확도 87%\nCRM 연동 제한적\n온보딩 3일'
+        }
+      },
+      {
+        id: 'cs-reply',
+        menu: '[효율화] CS 답변 추천',
+        description: '고객 문의와 히스토리를 기반으로 답변 초안을 생성합니다.',
+        endpoint: '/api/productivity/cs-reply',
+        fields: [
+          { name: 'inquiry', label: '고객 문의', type: 'textarea', rows: 5 },
+          { name: 'history', label: '고객 히스토리', type: 'textarea', rows: 4 }
+        ],
+        dummy: {
+          inquiry: '안녕하세요. 주문한 상품이 아직 배송 출발 전으로 표시되는데 언제 받을 수 있을까요?',
+          history: '3개월간 5회 구매한 VIP 고객, 최근 2회는 당일 출고 경험 있음.'
+        }
+      },
+      {
+        id: 'proposal',
+        menu: '[효율화] 영업 제안서 생성',
+        description: '타겟 기업 정보로 맞춤형 영업 제안서 초안을 만듭니다.',
+        endpoint: '/api/productivity/proposal',
+        fields: [
+          { name: 'targetCompanyName', label: '타겟 기업명', type: 'input' },
+          { name: 'businessModelSummary', label: '비즈니스 모델 요약', type: 'textarea', rows: 6 }
+        ],
+        dummy: {
+          targetCompanyName: '넥스트리테일',
+          businessModelSummary: '전국 오프라인 매장 + 자사몰 운영. 시즌별 프로모션 중심 매출 구조.\n최근 CRM 재구축 중이며, 고객 세그먼트 기반 메시징 고도화 필요.'
+        }
+      },
+      {
+        id: 'code-review',
+        menu: '[효율화] 코드 리뷰 봇',
+        description: '코드 스니펫을 입력하면 개선 포인트를 리뷰합니다.',
+        endpoint: '/api/productivity/code-review',
+        fields: [
+          { name: 'codeSnippet', label: '코드 스니펫', type: 'textarea', rows: 12 }
+        ],
+        dummy: {
+          codeSnippet: `function getUser(id, users){\n  for(let i=0;i<users.length;i++){\n    if(users[i].id==id){\n      return users[i]\n    }\n  }\n  return null\n}`
+        }
+      }
+    ];
+
+    const state = { activeFeatureId: features[0].id };
+
+    const elements = {
+      tabs: document.getElementById('featureTabs'),
+      title: document.getElementById('featureTitle'),
+      description: document.getElementById('featureDescription'),
+      form: document.getElementById('inputForm'),
+      output: document.getElementById('output'),
+      fillDummyBtn: document.getElementById('fillDummyBtn'),
+      submitBtn: document.getElementById('submitBtn')
+    };
+
+    const getActiveFeature = () => features.find((feature) => feature.id === state.activeFeatureId);
+
+    function renderTabs() {
+      elements.tabs.innerHTML = '';
+      features.forEach((feature) => {
+        const isActive = feature.id === state.activeFeatureId;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `w-full text-left px-3 py-2 rounded-lg border transition ${isActive
+          ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200'
+          : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'} `;
+        button.textContent = feature.menu;
+        button.onclick = () => {
+          state.activeFeatureId = feature.id;
+          render();
+        };
+        elements.tabs.appendChild(button);
+      });
+    }
+
+    function renderForm() {
+      const active = getActiveFeature();
+      elements.title.textContent = active.menu;
+      elements.description.textContent = active.description;
+      elements.form.innerHTML = '';
+
+      active.fields.forEach((field) => {
+        const wrapper = document.createElement('div');
+        const label = document.createElement('label');
+        label.className = 'block text-sm text-slate-300 mb-2';
+        label.textContent = field.label;
+
+        let input;
+        if (field.type === 'textarea') {
+          input = document.createElement('textarea');
+          input.rows = field.rows || 4;
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+        }
+
+        input.name = field.name;
+        input.placeholder = field.placeholder || '';
+        input.className = 'w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        elements.form.appendChild(wrapper);
+      });
+
+      elements.output.innerHTML = '<p class="text-slate-400">좌측 메뉴에서 기능을 선택하고 요청을 보내보세요.</p>';
+    }
+
+    function fillDummyData() {
+      const active = getActiveFeature();
+      Object.entries(active.dummy).forEach(([name, value]) => {
+        const input = elements.form.querySelector(`[name="${name}"]`);
+        if (input) input.value = value;
+      });
+    }
+
+    function collectFormValues() {
+      const active = getActiveFeature();
+      const values = {};
+      active.fields.forEach((field) => {
+        const input = elements.form.querySelector(`[name="${field.name}"]`);
+        values[field.name] = input ? input.value.trim() : '';
+      });
+      return active.mapPayload ? active.mapPayload(values) : values;
+    }
+
+    function toMarkdown(responseData) {
+      const payload = responseData?.data ?? responseData;
+      if (typeof payload === 'string') return payload;
+
+      if (payload?.proposalMarkdown) return payload.proposalMarkdown;
+      if (payload?.documentation?.markdown) return payload.documentation.markdown;
+
+      return `\`\`\`json\n${JSON.stringify(payload, null, 2)}\n\`\`\``;
+    }
+
+    async function submitRequest() {
+      const active = getActiveFeature();
+      const payload = collectFormValues();
+
+      elements.submitBtn.disabled = true;
+      elements.submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+      elements.output.innerHTML = `
+        <div class="flex items-center gap-3 text-indigo-300">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Claude가 생각 중입니다...</p>
+        </div>
+      `;
+
+      try {
+        const response = await fetch(`http://localhost:3000${active.endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || '요청 처리 중 오류가 발생했습니다.');
+        }
+
+        const markdownText = toMarkdown(data) || '응답은 왔지만 표시할 내용이 없습니다.';
+        elements.output.innerHTML = marked.parse(markdownText);
+      } catch (error) {
+        elements.output.innerHTML = `
+          <div class="rounded-lg border border-rose-800 bg-rose-950/40 p-4 text-rose-200">
+            <p class="font-semibold mb-2">요청 실패</p>
+            <p class="text-sm">${error.message}</p>
+          </div>
+        `;
+      } finally {
+        elements.submitBtn.disabled = false;
+        elements.submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
+    }
+
+    function render() {
+      renderTabs();
+      renderForm();
+    }
+
+    elements.fillDummyBtn.addEventListener('click', fillDummyData);
+    elements.submitBtn.addEventListener('click', submitRequest);
+
+    render();
+  </script>
+</body>
+</html>

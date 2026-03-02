@@ -13,8 +13,9 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "fastify": "^4.28.1",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@fastify/static": "^9.0.0",
     "dotenv": "^16.4.5",
-    "@anthropic-ai/sdk": "^0.39.0"
+    "fastify": "^4.28.1"
   }
 }

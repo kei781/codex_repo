@@ -1,3 +1,10 @@
+require('dotenv/config');
+
+const fs = require('node:fs');
+const path = require('node:path');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleAIFileManager } = require('@google/generative-ai/server');
+
 const { callClaude } = require('../utils/claudeClient');
 const { callGemini } = require('../utils/geminiClient');
 const { safeJsonParse } = require('../utils/jsonUtils');
@@ -103,9 +110,79 @@ async function analyzeCompetitor(payload = DUMMY_MARKETING_DATA.competitor) {
 }
 
 async function generateMediaMix(payload = {}) {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    const error = new Error('GEMINI_API_KEY is not set. Please check your .env file.');
+    error.statusCode = 500;
+    error.code = 'CONFIG_ERROR';
+    throw error;
+  }
+
+  const adDirPath = path.join(__dirname, 'ad');
+  const uploadedFiles = [];
+  const fileManager = new GoogleAIFileManager(apiKey);
+  const genAI = new GoogleGenerativeAI(apiKey);
+
+  if (!fs.existsSync(adDirPath)) {
+    const error = new Error(`'${adDirPath}' 디렉토리가 존재하지 않습니다.`);
+    error.statusCode = 400;
+    error.code = 'AD_DIRECTORY_NOT_FOUND';
+    throw error;
+  }
+
+  const files = fs.readdirSync(adDirPath);
+  const mdFiles = files.filter((file) => file.endsWith('.md'));
+
+  if (mdFiles.length === 0) {
+    const error = new Error('업로드할 .md 파일이 ad 디렉토리에 없습니다.');
+    error.statusCode = 400;
+    error.code = 'NO_MARKDOWN_FILES';
+    throw error;
+  }
+
+  for (const file of mdFiles) {
+    const filePath = path.join(adDirPath, file);
+
+    const uploadResult = await fileManager.uploadFile(filePath, {
+      mimeType: 'text/markdown',
+      displayName: file,
+    });
+
+    uploadedFiles.push(uploadResult.file);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    systemInstruction:
+      '당신은 디지털 광고 플랫폼의 수석 미디어 플래너입니다. 첨부된 매체 소개서 및 단가표(.md) 내의 정보만을 활용하여 사용자의 예산과 타겟에 맞는 최적의 미디어믹스를 제안하세요. 없는 매체를 지어내면 안 됩니다.',
+  });
+
+  const defaultPrompt = '이번에 공간 리뷰 앱을 런칭합니다. 2030 타겟으로 100만 원 예산을 쓰려고 하는데, 업로드된 매체들을 활용해서 가성비 좋은 미디어믹스를 짜주세요.';
+  const hasCampaignContext = payload.campaignGoal && payload.totalBudget && payload.targetAudience;
+  const prompt = payload.userPrompt
+    || (hasCampaignContext
+      ? `캠페인 목표: ${payload.campaignGoal}\n총 예산: ${payload.totalBudget}\n타겟 오디언스: ${payload.targetAudience}\n\n업로드된 매체 자료를 바탕으로 예산 안에서 효율적인 미디어믹스를 제안해 주세요. 매체별 예산 배분, 집행 이유, 기대 효과를 포함해 주세요.`
+      : defaultPrompt);
+
+  const requestContents = [
+    ...uploadedFiles.map((file) => ({
+      fileData: {
+        mimeType: file.mimeType,
+        fileUri: file.uri,
+      },
+    })),
+    { text: prompt },
+  ];
+
+  const result = await model.generateContent(requestContents);
+  const responseText = result.response.text();
+
   return {
-    message: '미디어믹스 로직을 여기에 구현하세요.',
-    input: payload,
+    markdown: responseText,
+    uploadedFileCount: uploadedFiles.length,
+    uploadedFileNames: uploadedFiles.map((file) => file.displayName),
   };
 }
 

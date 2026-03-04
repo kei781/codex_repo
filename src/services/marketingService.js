@@ -5,7 +5,6 @@ const path = require('node:path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { GoogleAIFileManager } = require('@google/generative-ai/server');
 
-const { callClaude } = require('../utils/claudeClient');
 const { callGemini } = require('../utils/geminiClient');
 const { safeJsonParse } = require('../utils/jsonUtils');
 

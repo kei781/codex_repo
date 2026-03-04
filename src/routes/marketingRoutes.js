@@ -2,6 +2,7 @@ const {
   adCopyController,
   sentimentController,
   competitorController,
+  mediaMixController,
 } = require('../controllers/marketingController');
 
 async function marketingRoutes(app) {
@@ -49,6 +50,21 @@ async function marketingRoutes(app) {
       },
     },
     handler: competitorController,
+  });
+
+  app.post('/media-mix', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['campaignGoal', 'totalBudget', 'targetAudience'],
+        properties: {
+          campaignGoal: { type: 'string' },
+          totalBudget: { type: 'string' },
+          targetAudience: { type: 'string' },
+        },
+      },
+    },
+    handler: mediaMixController,
   });
 }
 

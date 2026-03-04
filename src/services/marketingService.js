@@ -102,10 +102,18 @@ async function analyzeCompetitor(payload = DUMMY_MARKETING_DATA.competitor) {
   });
 }
 
+async function generateMediaMix(payload = {}) {
+  return {
+    message: '미디어믹스 로직을 여기에 구현하세요.',
+    input: payload,
+  };
+}
+
 module.exports = {
   DUMMY_MARKETING_DATA,
   SYSTEM_PROMPTS,
   generateAdCopy,
   analyzeSentiment,
   analyzeCompetitor,
+  generateMediaMix,
 };

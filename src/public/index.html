@@ -13,7 +13,7 @@
     <aside class="md:w-80 bg-slate-900/95 border-b md:border-b-0 md:border-r border-slate-800 p-5">
       <div class="mb-6">
         <h1 class="text-xl font-bold tracking-tight">CV3 올인원 API 스위트</h1>
-        <p class="text-sm text-slate-400 mt-1">6개 AI 기능을 한 화면에서 테스트</p>
+        <p class="text-sm text-slate-400 mt-1">7개 AI 기능을 한 화면에서 테스트</p>
       </div>
       <nav id="featureTabs" class="space-y-2"></nav>
     </aside>
@@ -99,6 +99,22 @@
         dummy: {
           myProductSpec: '월 9만원\nAI 추천 정확도 91%\nCRM 연동 지원\n온보딩 1일',
           competitorSpec: '월 12만원\nAI 추천 정확도 87%\nCRM 연동 제한적\n온보딩 3일'
+        }
+      },
+      {
+        id: 'media-mix',
+        menu: '[마케팅] 미디어믹스 추천',
+        description: '캠페인 목표와 예산을 바탕으로 미디어믹스 로직을 실행할 준비를 합니다.',
+        endpoint: '/api/marketing/media-mix',
+        fields: [
+          { name: 'campaignGoal', label: '캠페인 목표', type: 'input', placeholder: '예: 신규 리드 1,000건 확보' },
+          { name: 'totalBudget', label: '총 예산', type: 'input', placeholder: '예: 50000000 (원)' },
+          { name: 'targetAudience', label: '타깃 오디언스', type: 'textarea', rows: 4, placeholder: '예: 25~39세 B2B SaaS 마케팅 담당자' }
+        ],
+        dummy: {
+          campaignGoal: '3개월 내 데모 신청 1,500건 확보',
+          totalBudget: '50000000',
+          targetAudience: '국내 B2B SaaS 기업의 마케팅 매니저/팀장\n리타게팅 가능한 기존 방문자 포함'
         }
       },
       {

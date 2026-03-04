@@ -15,8 +15,14 @@ async function competitorController(request, reply) {
   return reply.send({ success: true, data: result });
 }
 
+async function mediaMixController(request, reply) {
+  const result = await marketingService.generateMediaMix(request.body);
+  return reply.send({ success: true, data: result });
+}
+
 module.exports = {
   adCopyController,
   sentimentController,
   competitorController,
+  mediaMixController,
 };

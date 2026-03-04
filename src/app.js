@@ -5,10 +5,20 @@ const fastifyStatic = require('@fastify/static'); // 플러그인 가져오기
 const marketingRoutes = require('./routes/marketingRoutes');
 const productivityRoutes = require('./routes/productivityRoutes');
 
+// 1. CORS 플러그인 불러오기
+const cors = require('@fastify/cors');
+
 function buildApp() {
   const app = Fastify({
     logger: true,
   });
+
+  app.register(cors, {
+    origin: "*", // 모든 도메인(출처) 허용
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // 모든 HTTP 메서드 허용
+    allowedHeaders: ["Content-Type", "Authorization"] // 허용할 헤더
+  });
+
   // 1. 정적 파일 경로 등록
   // 프로젝트 루트에 'public' 폴더를 만들고 그 안에 index.html을 넣었다고 가정합니다.
   app.register(fastifyStatic, {

@@ -1,4 +1,5 @@
 const { callClaude } = require('../utils/claudeClient');
+const { callGemini } = require('../utils/geminiClient');
 const { safeJsonParse } = require('../utils/jsonUtils');
 
 const DUMMY_PRODUCTIVITY_DATA = {
@@ -19,17 +20,17 @@ const DUMMY_PRODUCTIVITY_DATA = {
 };
 
 const SYSTEM_PROMPTS = {
-  csReply: `당신은 숙련된 고객지원 매니저입니다.
-목표: 문의 의도를 요약하고 답변 초안을 톤 2가지(강경/부드러운)로 제시하세요.
-반드시 JSON 문자열로 반환하세요.
-스키마:
-{
-  "intentSummary": "",
-  "draftReplies": {
-    "firmTone": "",
-    "softTone": ""
-  }
-}`,
+  csReply: `
+    System Prompt (역할 부여):
+    당신은 공감 능력이 뛰어나고 문제 해결이 빠른 시니어 CS 매니저입니다. 고객의 감정이 상하지 않으면서도 회사의 정책을 명확하게 전달하는 유려한 비즈니스 커뮤니케이션의 달인입니다.
+    User Prompt (입력 템플릿):
+    다음 고객의 문의 내용과 과거 상담 이력을 확인하고, 대응 방안을 마련해 주세요.
+    · 과거 이력: {past_history}
+    · 현재 문의 내용: {current_inquiry}
+    출력 형식 (Markdown):
+    1. 문의 핵심 요약: 고객이 진짜 원하는 것이 무엇인지 1줄 요약.
+    2. 답변 초안 A (공감/부드러운 톤): 고객의 불편에 깊이 공감하며 유연하게 대처하는 버전.
+    3. 답변 초안 B (원칙/단호한 톤): 규정을 명확히 안내하며 정중하게 거절/안내하는 버전.`,
   proposal: `당신은 엔터프라이즈 영업 컨설턴트입니다.
 목표: 대상 기업에 CV3 제품 도입 필요성을 설득력 있는 제안서 마크다운으로 작성하세요.
 필수 섹션: 문제 정의, 도입 효과, 기대 KPI, 실행 계획.
@@ -50,14 +51,14 @@ const SYSTEM_PROMPTS = {
 
 async function generateCsReply(payload = DUMMY_PRODUCTIVITY_DATA.csReply) {
   const userPrompt = `고객 문의:\n${payload.inquiry}\n\n과거 상담 이력:\n${payload.history}`;
-  const { text } = await callClaude({
+  const { text } = await callGemini({
     systemPrompt: SYSTEM_PROMPTS.csReply,
     userPrompt,
     temperature: 0.4,
   });
 
   return safeJsonParse(text, {
-    intentSummary: text,
+    markdown: text,
     draftReplies: {
       firmTone: '',
       softTone: '',
@@ -67,7 +68,7 @@ async function generateCsReply(payload = DUMMY_PRODUCTIVITY_DATA.csReply) {
 
 async function generateProposal(payload = DUMMY_PRODUCTIVITY_DATA.proposal) {
   const userPrompt = `타겟 고객사: ${payload.targetCompanyName}\n비즈니스 모델 요약: ${payload.businessModelSummary}\nCV3 제품군(Performach 포함)을 반드시 반영해 주세요.`;
-  const { text } = await callClaude({
+  const { text } = await callGemini({
     systemPrompt: SYSTEM_PROMPTS.proposal,
     userPrompt,
     temperature: 0.5,
@@ -80,9 +81,8 @@ async function generateProposal(payload = DUMMY_PRODUCTIVITY_DATA.proposal) {
 }
 
 async function reviewCode(payload = DUMMY_PRODUCTIVITY_DATA.codeReview) {
-  const userPrompt = `리뷰할 코드:\n\n\
-${payload.codeSnippet}`;
-  const { text } = await callClaude({
+  const userPrompt = `리뷰할 코드:\n\n\ ${payload.codeSnippet}`;
+  const { text } = await callGemini({
     systemPrompt: SYSTEM_PROMPTS.codeReview,
     userPrompt,
     temperature: 0.2,
